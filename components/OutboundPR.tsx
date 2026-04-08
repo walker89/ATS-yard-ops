@@ -39,6 +39,9 @@ export default function OutboundPR() {
   };
 
   const cols = '120px 100px 1fr 160px 100px 110px';
+  const colsMobile = '1fr';
+  const colsTablet = '120px 100px 1fr 120px';
+  const colsDesktop = '120px 100px 1fr 160px 100px 110px';
 
   return (
     <div>
@@ -62,7 +65,8 @@ export default function OutboundPR() {
 
         {active.length > 0 && (
           <>
-            <TableHead cols={cols}>
+            {/* Desktop Header */}
+            <TableHead cols={colsDesktop} className="hidden lg:grid">
               <span>Load #</span>
               <span>Trailer</span>
               <span>Cargo</span>
@@ -70,34 +74,119 @@ export default function OutboundPR() {
               <span>Port ETA</span>
               <span>Actions</span>
             </TableHead>
+
+            {/* Tablet Header */}
+            <TableHead cols={colsTablet} className="hidden md:grid lg:hidden">
+              <span>Load #</span>
+              <span>Trailer</span>
+              <span>Cargo / Status</span>
+              <span>Actions</span>
+            </TableHead>
+
             {active.map(s => (
-              <TableRow key={s.id} cols={cols}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <LoadTag>{s.load}</LoadTag>
-                </span>
-                <Mono>{s.trailer}</Mono>
-                <span>
-                  <span style={{ fontWeight: 500, fontSize: 13, color: C.g700 }}>{s.cargo}</span>
-                  <div style={{ fontSize: 10, color: C.g400, marginTop: 2 }}>{s.timestamp}</div>
-                </span>
-                <select
-                  value={s.status}
-                  onChange={e => updateOutboundStatus(s.id, e.target.value as OutboundStatus)}
-                  style={{ ...selectStyle, fontSize: 12 }}
+              <>
+                {/* Desktop Row */}
+                <TableRow key={s.id} cols={colsDesktop} className="hidden lg:grid">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <LoadTag>{s.load}</LoadTag>
+                  </span>
+                  <Mono>{s.trailer}</Mono>
+                  <span>
+                    <span style={{ fontWeight: 500, fontSize: 13, color: C.g700 }}>{s.cargo}</span>
+                    <div style={{ fontSize: 10, color: C.g400, marginTop: 2 }}>{s.timestamp}</div>
+                  </span>
+                  <select
+                    value={s.status}
+                    onChange={e => updateOutboundStatus(s.id, e.target.value as OutboundStatus)}
+                    style={{ ...selectStyle, fontSize: 12 }}
+                  >
+                    {STATUS_OPTS.filter(o => o.value !== 'departed').map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <PRTag />
+                    <Muted>{s.eta}</Muted>
+                  </span>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <BtnSuccess onClick={() => departOutbound(s.id)}>Departed</BtnSuccess>
+                    <BtnDanger  onClick={() => deleteOutbound(s.id)}>✕</BtnDanger>
+                  </div>
+                </TableRow>
+
+                {/* Tablet Row */}
+                <TableRow key={`${s.id}-tablet`} cols={colsTablet} className="hidden md:grid lg:hidden">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <LoadTag>{s.load}</LoadTag>
+                  </span>
+                  <Mono>{s.trailer}</Mono>
+                  <span>
+                    <div style={{ fontWeight: 500, fontSize: 13, color: C.g700 }}>{s.cargo}</div>
+                    <div style={{ marginTop: 4 }}>
+                      <select
+                        value={s.status}
+                        onChange={e => updateOutboundStatus(s.id, e.target.value as OutboundStatus)}
+                        style={{ ...selectStyle, fontSize: 12 }}
+                      >
+                        {STATUS_OPTS.filter(o => o.value !== 'departed').map(o => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                      <PRTag />
+                      <Muted>{s.eta}</Muted>
+                    </div>
+                    <div style={{ fontSize: 10, color: C.g400, marginTop: 2 }}>{s.timestamp}</div>
+                  </span>
+                  <div style={{ display: 'flex', gap: 4, flexDirection: 'column' }}>
+                    <BtnSuccess onClick={() => departOutbound(s.id)}>Departed</BtnSuccess>
+                    <BtnDanger  onClick={() => deleteOutbound(s.id)}>✕</BtnDanger>
+                  </div>
+                </TableRow>
+
+                {/* Mobile Card */}
+                <div
+                  key={`${s.id}-mobile`}
+                  className="md:hidden"
+                  style={{
+                    background: C.g50, border: `1px solid ${C.g200}`, borderRadius: 8,
+                    padding: '14px', marginBottom: 8,
+                  }}
                 >
-                  {STATUS_OPTS.filter(o => o.value !== 'departed').map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <PRTag />
-                  <Muted>{s.eta}</Muted>
-                </span>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <BtnSuccess onClick={() => departOutbound(s.id)}>Departed</BtnSuccess>
-                  <BtnDanger  onClick={() => deleteOutbound(s.id)}>✕</BtnDanger>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                    <div>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                        <LoadTag>{s.load}</LoadTag>
+                      </span>
+                      <Mono>{s.trailer}</Mono>
+                    </div>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <BtnSuccess onClick={() => departOutbound(s.id)}>Departed</BtnSuccess>
+                      <BtnDanger  onClick={() => deleteOutbound(s.id)}>✕</BtnDanger>
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 8 }}>
+                    <span style={{ fontWeight: 500, fontSize: 13, color: C.g700 }}>{s.cargo}</span>
+                  </div>
+                  <div style={{ marginBottom: 8 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <PRTag />
+                      <Muted>ETA: {s.eta}</Muted>
+                    </span>
+                    <div style={{ fontSize: 10, color: C.g400, marginTop: 2 }}>{s.timestamp}</div>
+                  </div>
+                  <select
+                    value={s.status}
+                    onChange={e => updateOutboundStatus(s.id, e.target.value as OutboundStatus)}
+                    style={{ ...selectStyle, fontSize: 12, width: '100%' }}
+                  >
+                    {STATUS_OPTS.filter(o => o.value !== 'departed').map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
                 </div>
-              </TableRow>
+              </>
             ))}
           </>
         )}
@@ -113,15 +202,82 @@ export default function OutboundPR() {
             </button>
             {showDeparted && (
               <div style={{ marginTop: 8, opacity: 0.7 }}>
+                {/* Desktop Header for Departed */}
+                <TableHead cols={colsDesktop} className="hidden lg:grid">
+                  <span>Load #</span>
+                  <span>Trailer</span>
+                  <span>Cargo</span>
+                  <span>Status</span>
+                  <span>Port ETA</span>
+                  <span>Actions</span>
+                </TableHead>
+
+                {/* Tablet Header for Departed */}
+                <TableHead cols={colsTablet} className="hidden md:grid lg:hidden">
+                  <span>Load #</span>
+                  <span>Trailer</span>
+                  <span>Cargo / Status</span>
+                  <span>Actions</span>
+                </TableHead>
+
                 {departed.map(s => (
-                  <TableRow key={s.id} cols={cols}>
-                    <LoadTag>{s.load}</LoadTag>
-                    <Mono>{s.trailer}</Mono>
-                    <Muted>{s.cargo}</Muted>
-                    <Badge type="departed" />
-                    <Muted>{s.eta}</Muted>
-                    <BtnDanger onClick={() => deleteOutbound(s.id)}>Remove</BtnDanger>
-                  </TableRow>
+                  <>
+                    {/* Desktop Departed Row */}
+                    <TableRow key={s.id} cols={colsDesktop} className="hidden lg:grid">
+                      <LoadTag>{s.load}</LoadTag>
+                      <Mono>{s.trailer}</Mono>
+                      <Muted>{s.cargo}</Muted>
+                      <Badge type="departed" />
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <PRTag />
+                        <Muted>{s.eta}</Muted>
+                      </span>
+                      <BtnDanger onClick={() => deleteOutbound(s.id)}>Remove</BtnDanger>
+                    </TableRow>
+
+                    {/* Tablet Departed Row */}
+                    <TableRow key={`${s.id}-tablet`} cols={colsTablet} className="hidden md:grid lg:hidden">
+                      <LoadTag>{s.load}</LoadTag>
+                      <Mono>{s.trailer}</Mono>
+                      <span>
+                        <div><Muted>{s.cargo}</Muted></div>
+                        <div style={{ marginTop: 4 }}><Badge type="departed" /></div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                          <PRTag />
+                          <Muted>{s.eta}</Muted>
+                        </div>
+                      </span>
+                      <BtnDanger onClick={() => deleteOutbound(s.id)}>Remove</BtnDanger>
+                    </TableRow>
+
+                    {/* Mobile Departed Card */}
+                    <div
+                      key={`${s.id}-mobile`}
+                      className="md:hidden"
+                      style={{
+                        background: C.g50, border: `1px solid ${C.g200}`, borderRadius: 8,
+                        padding: '14px', marginBottom: 8, opacity: 0.7,
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                        <div>
+                          <LoadTag>{s.load}</LoadTag>
+                          <div style={{ marginTop: 4 }}><Mono>{s.trailer}</Mono></div>
+                        </div>
+                        <BtnDanger onClick={() => deleteOutbound(s.id)}>Remove</BtnDanger>
+                      </div>
+                      <div style={{ marginBottom: 8 }}>
+                        <Muted>Cargo: {s.cargo}</Muted>
+                      </div>
+                      <div>
+                        <Badge type="departed" />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                          <PRTag />
+                          <Muted>ETA: {s.eta}</Muted>
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 ))}
               </div>
             )}

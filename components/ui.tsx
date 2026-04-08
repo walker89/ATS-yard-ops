@@ -178,8 +178,8 @@ export function FormGroup({ label, children }: { label: string; children: React.
 }
 
 // ─── Typography helpers ───────────────────────────────────────────────────────
-export const Mono = ({ children }: { children: React.ReactNode }) => (
-  <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 500, fontSize: 13, color: C.g900 }}>{children}</span>
+export const Mono = ({ children, style, ...props }: { children: React.ReactNode; style?: React.CSSProperties } & React.HTMLAttributes<HTMLSpanElement>) => (
+  <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 500, fontSize: 13, color: C.g900, ...style }} {...props}>{children}</span>
 );
 export const Muted = ({ children }: { children: React.ReactNode }) => (
   <span style={{ color: C.g500, fontSize: 12 }}>{children}</span>
@@ -217,21 +217,22 @@ export const InfoBanner = ({ children }: { children: React.ReactNode }) => (
 );
 
 // ─── Table header / row ───────────────────────────────────────────────────────
-export function TableHead({ cols, children }: { cols: string; children: React.ReactNode }) {
+export function TableHead({ cols, children, className, style }: { cols: string; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
     <div style={{
       display: 'grid', gridTemplateColumns: cols, gap: 10,
       padding: '6px 14px', fontSize: 10, fontWeight: 700,
       letterSpacing: '0.07em', textTransform: 'uppercase', color: C.g400, marginBottom: 6,
-    }}>
+      ...style,
+    }} className={className}>
       {children}
     </div>
   );
 }
 
 export function TableRow({
-  cols, hl, children,
-}: { cols: string; hl?: 'red' | 'amber'; children: React.ReactNode }) {
+  cols, hl, children, className, style,
+}: { cols: string; hl?: 'red' | 'amber'; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   const bg   = hl === 'red' ? C.redLight : hl === 'amber' ? C.amberBg : C.g50;
   const bc   = hl === 'red' ? C.redMid   : hl === 'amber' ? C.amberMid : C.g200;
   const bl   = hl === 'red' ? `3px solid ${C.red}` : hl === 'amber' ? `3px solid ${C.amber}` : `1px solid ${C.g200}`;
@@ -240,7 +241,8 @@ export function TableRow({
       display: 'grid', gridTemplateColumns: cols, gap: 10,
       padding: '10px 14px', background: bg, border: `1px solid ${bc}`,
       borderLeft: bl, borderRadius: 8, alignItems: 'center', fontSize: 13, marginBottom: 6,
-    }}>
+      ...style,
+    }} className={className}>
       {children}
     </div>
   );

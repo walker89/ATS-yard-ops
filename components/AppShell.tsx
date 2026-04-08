@@ -38,24 +38,24 @@ export default function AppShell() {
 
       {/* ── Header ── */}
       <div style={{
-        background: C.navy, height: 56, display: 'flex', alignItems: 'center',
-        padding: '0 24px', gap: 16, position: 'sticky', top: 0, zIndex: 100,
+        background: C.navy, minHeight: 56, display: 'flex', alignItems: 'center',
+        padding: '0 16px', gap: 12, position: 'sticky', top: 0, zIndex: 100,
         boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-      }} className="no-print">
+      }} className="sm:px-6 lg:px-8">
         <span style={{
           background: C.red, color: '#fff', fontWeight: 600, fontSize: 13,
           letterSpacing: '0.08em', padding: '5px 12px', borderRadius: 6,
         }}>
           ATS
         </span>
-        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)' }} />
-        <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 15, fontWeight: 500 }}>
+        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)' }} className="hidden sm:block" />
+        <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14, fontWeight: 500 }} className="hidden sm:inline">
           Yard Operations Center
         </span>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* User initials input */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="hidden sm:flex">
             <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11 }}>Initials:</span>
             <input
               value={userInitials}
@@ -69,14 +69,14 @@ export default function AppShell() {
               }}
             />
           </div>
-          <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, fontFamily: "'DM Mono', monospace" }}>
+          <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, fontFamily: "'DM Mono', monospace" }} className="hidden md:inline">
             {date}
           </span>
           <span style={{
             background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
-            color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 500,
-            padding: '4px 12px', borderRadius: 6,
-          }}>
+            color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: 500,
+            padding: '4px 8px', borderRadius: 6,
+          }} className="hidden lg:inline">
             Jacksonville Yard
           </span>
         </div>
@@ -85,22 +85,23 @@ export default function AppShell() {
       {/* ── Tab nav ── */}
       <div style={{
         background: C.white, borderBottom: `1.5px solid ${C.g200}`,
-        display: 'flex', padding: '0 24px', overflowX: 'auto',
+        display: 'flex', padding: '0 16px', overflowX: 'auto',
         position: 'sticky', top: 56, zIndex: 99,
         boxShadow: '0 1px 3px rgba(27,42,74,0.07)',
-      }} className="no-print">
+      }} className="sm:px-6 lg:px-8 no-print">
         {TABS.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              padding: '14px 18px', fontSize: 13, fontWeight: 500,
+              padding: '12px 12px', fontSize: 12, fontWeight: 500,
               fontFamily: 'inherit', whiteSpace: 'nowrap',
-              color: tab === t.id ? C.red : C.g500,
+              color: tab === t.id ? C.red : C.g500, flexShrink: 0,
               borderBottom: tab === t.id ? `2px solid ${C.red}` : '2px solid transparent',
               transition: 'color 0.15s', letterSpacing: '0.01em',
             }}
+            className="sm:px-4 sm:text-sm"
           >
             {t.label}
           </button>
@@ -108,7 +109,7 @@ export default function AppShell() {
       </div>
 
       {/* ── Content ── */}
-      <div style={{ padding: 24, maxWidth: 1440, margin: '0 auto' }} className="page-enter">
+      <div style={{ padding: 16, maxWidth: 1440, margin: '0 auto' }} className="sm:px-6 lg:px-8">
         {tab === 'dashboard'  && <Dashboard />}
         {tab === 'trailers'   && <TrailerInventory />}
         {tab === 'inbound'    && <InboundLoads />}

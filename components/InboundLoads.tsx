@@ -40,6 +40,9 @@ export default function InboundLoads() {
   };
 
   const cols = '120px 100px 1fr 150px 160px 100px';
+  const colsMobile = '1fr';
+  const colsTablet = '120px 100px 1fr 120px';
+  const colsDesktop = '120px 100px 1fr 150px 160px 100px';
 
   return (
     <div>
@@ -63,7 +66,8 @@ export default function InboundLoads() {
 
         {active.length > 0 && (
           <>
-            <TableHead cols={cols}>
+            {/* Desktop Header */}
+            <TableHead cols={colsDesktop} className="hidden lg:grid">
               <span>Load #</span>
               <span>Trailer</span>
               <span>Origin</span>
@@ -71,29 +75,103 @@ export default function InboundLoads() {
               <span>Disposition</span>
               <span>Actions</span>
             </TableHead>
+
+            {/* Tablet Header */}
+            <TableHead cols={colsTablet} className="hidden md:grid lg:hidden">
+              <span>Load #</span>
+              <span>Trailer</span>
+              <span>Origin / Status</span>
+              <span>Actions</span>
+            </TableHead>
+
             {active.map(r => (
-              <TableRow key={r.id} cols={cols}>
-                <LoadTag>{r.load}</LoadTag>
-                <Mono>{r.trailer}</Mono>
-                <span>
-                  <Muted>{r.origin}</Muted>
-                  <div style={{ fontSize: 10, color: C.g400, marginTop: 2 }}>{r.timestamp}</div>
-                </span>
-                <select
-                  value={r.status}
-                  onChange={e => updateInboundStatus(r.id, e.target.value as InboundStatus)}
-                  style={{ ...selectStyle, fontSize: 12 }}
+              <>
+                {/* Desktop Row */}
+                <TableRow key={r.id} cols={colsDesktop} className="hidden lg:grid">
+                  <LoadTag>{r.load}</LoadTag>
+                  <Mono>{r.trailer}</Mono>
+                  <span>
+                    <Muted>{r.origin}</Muted>
+                    <div style={{ fontSize: 10, color: C.g400, marginTop: 2 }}>{r.timestamp}</div>
+                  </span>
+                  <select
+                    value={r.status}
+                    onChange={e => updateInboundStatus(r.id, e.target.value as InboundStatus)}
+                    style={{ ...selectStyle, fontSize: 12 }}
+                  >
+                    {STATUS_OPTS.filter(o => o.value !== 'complete').map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                  <Muted>{r.disposition}</Muted>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <BtnSuccess onClick={() => completeInbound(r.id)}>Done</BtnSuccess>
+                    <BtnDanger  onClick={() => deleteInbound(r.id)}>✕</BtnDanger>
+                  </div>
+                </TableRow>
+
+                {/* Tablet Row */}
+                <TableRow key={`${r.id}-tablet`} cols={colsTablet} className="hidden md:grid lg:hidden">
+                  <LoadTag>{r.load}</LoadTag>
+                  <Mono>{r.trailer}</Mono>
+                  <span>
+                    <div><Muted>{r.origin}</Muted></div>
+                    <div style={{ marginTop: 4 }}>
+                      <select
+                        value={r.status}
+                        onChange={e => updateInboundStatus(r.id, e.target.value as InboundStatus)}
+                        style={{ ...selectStyle, fontSize: 12 }}
+                      >
+                        {STATUS_OPTS.filter(o => o.value !== 'complete').map(o => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ fontSize: 10, color: C.g400, marginTop: 2 }}>{r.timestamp}</div>
+                  </span>
+                  <div style={{ display: 'flex', gap: 4, flexDirection: 'column' }}>
+                    <BtnSuccess onClick={() => completeInbound(r.id)}>Done</BtnSuccess>
+                    <BtnDanger  onClick={() => deleteInbound(r.id)}>✕</BtnDanger>
+                  </div>
+                </TableRow>
+
+                {/* Mobile Card */}
+                <div
+                  key={`${r.id}-mobile`}
+                  className="md:hidden"
+                  style={{
+                    background: C.g50, border: `1px solid ${C.g200}`, borderRadius: 8,
+                    padding: '14px', marginBottom: 8,
+                  }}
                 >
-                  {STATUS_OPTS.filter(o => o.value !== 'complete').map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-                <Muted>{r.disposition}</Muted>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <BtnSuccess onClick={() => completeInbound(r.id)}>Done</BtnSuccess>
-                  <BtnDanger  onClick={() => deleteInbound(r.id)}>✕</BtnDanger>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                    <div>
+                      <LoadTag>{r.load}</LoadTag>
+                      <div style={{ marginTop: 4 }}><Mono>{r.trailer}</Mono></div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <BtnSuccess onClick={() => completeInbound(r.id)}>Done</BtnSuccess>
+                      <BtnDanger  onClick={() => deleteInbound(r.id)}>✕</BtnDanger>
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 8 }}>
+                    <Muted>Origin: {r.origin}</Muted>
+                    <div style={{ fontSize: 10, color: C.g400, marginTop: 2 }}>{r.timestamp}</div>
+                  </div>
+                  <div style={{ marginBottom: 8 }}>
+                    <Muted>Disposition: {r.disposition}</Muted>
+                  </div>
+                  <select
+                    value={r.status}
+                    onChange={e => updateInboundStatus(r.id, e.target.value as InboundStatus)}
+                    style={{ ...selectStyle, fontSize: 12, width: '100%' }}
+                  >
+                    {STATUS_OPTS.filter(o => o.value !== 'complete').map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
                 </div>
-              </TableRow>
+              </>
             ))}
           </>
         )}
@@ -109,15 +187,72 @@ export default function InboundLoads() {
             </button>
             {showComplete && (
               <div style={{ marginTop: 8, opacity: 0.7 }}>
+                {/* Desktop Header for Completed */}
+                <TableHead cols={colsDesktop} className="hidden lg:grid">
+                  <span>Load #</span>
+                  <span>Trailer</span>
+                  <span>Origin</span>
+                  <span>Status</span>
+                  <span>Disposition</span>
+                  <span>Actions</span>
+                </TableHead>
+
+                {/* Tablet Header for Completed */}
+                <TableHead cols={colsTablet} className="hidden md:grid lg:hidden">
+                  <span>Load #</span>
+                  <span>Trailer</span>
+                  <span>Origin / Status</span>
+                  <span>Actions</span>
+                </TableHead>
+
                 {completed.map(r => (
-                  <TableRow key={r.id} cols={cols}>
-                    <LoadTag>{r.load}</LoadTag>
-                    <Mono>{r.trailer}</Mono>
-                    <Muted>{r.origin}</Muted>
-                    <Badge type="complete" />
-                    <Muted>{r.disposition}</Muted>
-                    <BtnDanger onClick={() => deleteInbound(r.id)}>Remove</BtnDanger>
-                  </TableRow>
+                  <>
+                    {/* Desktop Completed Row */}
+                    <TableRow key={r.id} cols={colsDesktop} className="hidden lg:grid">
+                      <LoadTag>{r.load}</LoadTag>
+                      <Mono>{r.trailer}</Mono>
+                      <Muted>{r.origin}</Muted>
+                      <Badge type="complete" />
+                      <Muted>{r.disposition}</Muted>
+                      <BtnDanger onClick={() => deleteInbound(r.id)}>Remove</BtnDanger>
+                    </TableRow>
+
+                    {/* Tablet Completed Row */}
+                    <TableRow key={`${r.id}-tablet`} cols={colsTablet} className="hidden md:grid lg:hidden">
+                      <LoadTag>{r.load}</LoadTag>
+                      <Mono>{r.trailer}</Mono>
+                      <span>
+                        <div><Muted>{r.origin}</Muted></div>
+                        <div style={{ marginTop: 4 }}><Badge type="complete" /></div>
+                      </span>
+                      <BtnDanger onClick={() => deleteInbound(r.id)}>Remove</BtnDanger>
+                    </TableRow>
+
+                    {/* Mobile Completed Card */}
+                    <div
+                      key={`${r.id}-mobile`}
+                      className="md:hidden"
+                      style={{
+                        background: C.g50, border: `1px solid ${C.g200}`, borderRadius: 8,
+                        padding: '14px', marginBottom: 8, opacity: 0.7,
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                        <div>
+                          <LoadTag>{r.load}</LoadTag>
+                          <div style={{ marginTop: 4 }}><Mono>{r.trailer}</Mono></div>
+                        </div>
+                        <BtnDanger onClick={() => deleteInbound(r.id)}>Remove</BtnDanger>
+                      </div>
+                      <div style={{ marginBottom: 8 }}>
+                        <Muted>Origin: {r.origin}</Muted>
+                      </div>
+                      <div>
+                        <Muted>Disposition: {r.disposition}</Muted>
+                        <div style={{ marginTop: 4 }}><Badge type="complete" /></div>
+                      </div>
+                    </div>
+                  </>
                 ))}
               </div>
             )}

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useYard } from '@/context/YardContext';
 import type { TrailerStatus } from '@/types';
 import {
-  C, Card, CardHeader, Badge, BtnPrimary, BtnSecondary,
+  C, Card, CardHeader, Badge, BtnPrimary, BtnSecondary, BtnSuccess,
   CountPill, FormGroup, Divider, SectionTitle,
   Mono, Muted, LoadTag,
   inputStyle, selectStyle, TableHead, TableRow,
@@ -71,6 +71,9 @@ export default function TrailerInventory() {
   };
 
   const cols = '90px 80px 80px 1fr 155px 150px 80px';
+  const colsMobile = '1fr';
+  const colsTablet = '90px 80px 1fr 120px 80px';
+  const colsDesktop = '90px 80px 80px 1fr 155px 150px 80px';
 
   return (
     <Card>
@@ -157,7 +160,7 @@ export default function TrailerInventory() {
       </div>
 
       {/* Table */}
-      <TableHead cols={cols}>
+      <TableHead cols={cols} className="hidden lg:grid" style={{ gridTemplateColumns: colsDesktop }}>
         <span>Trailer #</span>
         <span>Year</span>
         <span>Make</span>
@@ -167,54 +170,164 @@ export default function TrailerInventory() {
         <span>Notes</span>
       </TableHead>
 
-      {pageItems.map(t => (
-        <TableRow
-          key={t.num}
-          cols={cols}
-          hl={t.status === 'red' ? 'red' : t.status === 'dot' ? 'amber' : undefined}
-        >
-          <Mono>{t.num}</Mono>
-          <Muted>{t.year || '—'}</Muted>
-          <Muted>{t.make || '—'}</Muted>
-          <span>
-            {t.load
-              ? <LoadTag>{t.load}</LoadTag>
-              : <><Muted>{t.type}</Muted>{t.notes && <span style={{ marginLeft: 6, fontSize: 11, color: C.g400 }}>· {t.notes}</span>}</>
-            }
-          </span>
-          <span><Badge type={t.status} /></span>
-          <select
-            value={t.status}
-            onChange={e => handleStatusChange(t.num, e.target.value)}
-            style={{ ...selectStyle, fontSize: 12 }}
-          >
-            {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+      {/* Mobile/Tablet Header */}
+      <TableHead cols={colsTablet} className="hidden md:grid lg:hidden" style={{ gridTemplateColumns: colsTablet }}>
+        <span>Trailer #</span>
+        <span>Year</span>
+        <span>Type / Status</span>
+        <span>Update status</span>
+        <span>Notes</span>
+      </TableHead>
 
-          {/* Inline notes edit */}
-          <span>
-            {editNotes === t.num ? (
-              <div style={{ display: 'flex', gap: 4 }}>
-                <input
-                  autoFocus
-                  style={{ ...inputStyle, fontSize: 11, padding: '4px 7px' }}
-                  value={notesDraft}
-                  onChange={e => setNotesDraft(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') saveNotes(t.num); if (e.key === 'Escape') setEditNotes(null); }}
-                />
-                <button onClick={() => saveNotes(t.num)} style={{ background: C.green, color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}>✓</button>
-              </div>
-            ) : (
-              <button
-                onClick={() => startEditNotes(t.num, t.notes)}
-                title="Edit notes"
-                style={{ background: 'transparent', border: `1px solid ${C.g200}`, color: C.g400, borderRadius: 5, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}
+      {pageItems.map(t => (
+        <>
+          {/* Desktop Table Row */}
+          <TableRow
+            key={t.num}
+            cols={colsDesktop}
+            hl={t.status === 'red' ? 'red' : t.status === 'dot' ? 'amber' : undefined}
+            className="hidden lg:grid"
+          >
+            <Mono>{t.num}</Mono>
+            <Muted>{t.year || '—'}</Muted>
+            <Muted>{t.make || '—'}</Muted>
+            <span>
+              {t.load
+                ? <LoadTag>{t.load}</LoadTag>
+                : <><Muted>{t.type}</Muted>{t.notes && <span style={{ marginLeft: 6, fontSize: 11, color: C.g400 }}>· {t.notes}</span>}</>
+              }
+            </span>
+            <span><Badge type={t.status} /></span>
+            <select
+              value={t.status}
+              onChange={e => handleStatusChange(t.num, e.target.value)}
+              style={{ ...selectStyle, fontSize: 12 }}
+            >
+              {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <span>
+              {editNotes === t.num ? (
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <input
+                    autoFocus
+                    style={{ ...inputStyle, fontSize: 11, padding: '4px 7px' }}
+                    value={notesDraft}
+                    onChange={e => setNotesDraft(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') saveNotes(t.num); if (e.key === 'Escape') setEditNotes(null); }}
+                  />
+                  <BtnSuccess onClick={() => saveNotes(t.num)}>✓</BtnSuccess>
+                </div>
+              ) : (
+                <button
+                  onClick={() => startEditNotes(t.num, t.notes)}
+                  title="Edit notes"
+                  style={{ background: 'transparent', border: `1px solid ${C.g200}`, color: C.g400, borderRadius: 5, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}
+                >
+                  {t.notes || '+ note'}
+                </button>
+              )}
+            </span>
+          </TableRow>
+
+          {/* Tablet Table Row */}
+          <TableRow
+            key={`${t.num}-tablet`}
+            cols={colsTablet}
+            hl={t.status === 'red' ? 'red' : t.status === 'dot' ? 'amber' : undefined}
+            className="hidden md:grid lg:hidden"
+          >
+            <Mono>{t.num}</Mono>
+            <Muted>{t.year || '—'}</Muted>
+            <span>
+              <div><Muted>{t.type}</Muted></div>
+              <div style={{ marginTop: 4 }}><Badge type={t.status} /></div>
+              {t.load && <div style={{ marginTop: 4 }}><LoadTag>{t.load}</LoadTag></div>}
+            </span>
+            <select
+              value={t.status}
+              onChange={e => handleStatusChange(t.num, e.target.value)}
+              style={{ ...selectStyle, fontSize: 12 }}
+            >
+              {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <span>
+              {editNotes === t.num ? (
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <input
+                    autoFocus
+                    style={{ ...inputStyle, fontSize: 11, padding: '4px 7px' }}
+                    value={notesDraft}
+                    onChange={e => setNotesDraft(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') saveNotes(t.num); if (e.key === 'Escape') setEditNotes(null); }}
+                  />
+                  <BtnSuccess onClick={() => saveNotes(t.num)}>✓</BtnSuccess>
+                </div>
+              ) : (
+                <button
+                  onClick={() => startEditNotes(t.num, t.notes)}
+                  title="Edit notes"
+                  style={{ background: 'transparent', border: `1px solid ${C.g200}`, color: C.g400, borderRadius: 5, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}
+                >
+                  {t.notes || '+ note'}
+                </button>
+              )}
+            </span>
+          </TableRow>
+
+          {/* Mobile Card Layout */}
+          <div
+            key={`${t.num}-mobile`}
+            className="md:hidden"
+            style={{
+              background: t.status === 'red' ? C.redLight : t.status === 'dot' ? C.amberBg : C.g50,
+              border: `1px solid ${t.status === 'red' ? C.redMid : t.status === 'dot' ? C.amberMid : C.g200}`,
+              borderLeft: t.status === 'red' ? `3px solid ${C.red}` : t.status === 'dot' ? `3px solid ${C.amber}` : `1px solid ${C.g200}`,
+              borderRadius: 8, padding: '14px', marginBottom: 8,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <Mono style={{ fontSize: 16 }}>{t.num}</Mono>
+              <Badge type={t.status} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+              <div><Muted>Year: {t.year || '—'}</Muted></div>
+              <div><Muted>Make: {t.make || '—'}</Muted></div>
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <Muted>Type: {t.type}</Muted>
+              {t.load && <div style={{ marginTop: 4 }}><LoadTag>{t.load}</LoadTag></div>}
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <select
+                value={t.status}
+                onChange={e => handleStatusChange(t.num, e.target.value)}
+                style={{ ...selectStyle, fontSize: 12, flex: 1, minWidth: 120 }}
               >
-                {t.notes || '+ note'}
-              </button>
-            )}
-          </span>
-        </TableRow>
+                {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              {editNotes === t.num ? (
+                <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+                  <input
+                    autoFocus
+                    style={{ ...inputStyle, fontSize: 11, padding: '4px 7px', flex: 1 }}
+                    value={notesDraft}
+                    onChange={e => setNotesDraft(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') saveNotes(t.num); if (e.key === 'Escape') setEditNotes(null); }}
+                  />
+                  <BtnSuccess onClick={() => saveNotes(t.num)}>✓</BtnSuccess>
+                </div>
+              ) : (
+                <button
+                  onClick={() => startEditNotes(t.num, t.notes)}
+                  title="Edit notes"
+                  style={{ background: 'transparent', border: `1px solid ${C.g200}`, color: C.g400, borderRadius: 5, padding: '4px 8px', fontSize: 11, cursor: 'pointer', flex: 1 }}
+                >
+                  {t.notes || '+ note'}
+                </button>
+              )}
+            </div>
+          </div>
+        </>
       ))}
 
       {/* Pagination */}
