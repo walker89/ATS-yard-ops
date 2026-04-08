@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ATS Yard Operations Center — Jacksonville</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:15px;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#F8F9FB;color:#1A1F35;min-height:100vh;-webkit-font-smoothing:antialiased;}
+input,select,textarea{font-family:'DM Sans',system-ui,sans-serif;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#C8CEDC;border-radius:3px;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(.85);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+.fade{animation:fadeIn 0.18s ease;}
+
+/* RESPONSIVE GRID HELPERS */
+.grid-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px;}
+.grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.grid-form-5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;}
+.grid-form-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;}
+.grid-form-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+@media(max-width:768px){
+  .grid-stats{grid-template-columns:repeat(2,1fr);}
+  .grid-2col{grid-template-columns:1fr;}
+  .grid-form-5,.grid-form-4,.grid-form-2{grid-template-columns:1fr;}
+  .hide-mobile{display:none!important;}
+  .main-content{padding:12px 12px 90px!important;}
+  .topbar-title{font-size:13px!important;}
+}
+@media(min-width:769px){
+  .bottom-nav{display:none!important;}
+  .top-nav{display:flex!important;}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect}=React;
+const C={
+  navy:"#1B2A4A",navyMid:"#253B65",navyLight:"#EBF0F8",
+  red:"#C8102E",redDark:"#9E0B22",redLight:"#FDEAED",redMid:"#F5B8C2",
+  green:"#1A7A4A",greenBg:"#E8F5EE",greenMid:"#A8D8BC",
+  blue:"#1558A8",blueBg:"#EBF2FB",blueMid:"#A0C0E8",
+  amber:"#A05A00",amberBg:"#FFF4E0",amberMid:"#F5C878",
+  purple:"#6B3FA0",purpleBg:"#F3EDFB",
+  g50:"#F8F9FB",g100:"#F0F2F6",g200:"#E2E6EE",g300:"#C8CEDC",
+  g400:"#9AA3B8",g500:"#6B7590",g700:"#374162",g900:"#1A1F35",white:"#FFFFFF",
+};
+const BS={
+  available:{bg:C.greenBg,color:C.green,border:C.greenMid,dot:C.green,label:"Available"},
+  loaded:{bg:C.blueBg,color:C.blue,border:C.blueMid,dot:C.blue,label:"Loaded"},
+  red:{bg:C.redLight,color:C.redDark,border:C.redMid,dot:C.red,label:"Red tag — OOS"},
+  dot:{bg:C.amberBg,color:C.amber,border:C.amberMid,dot:C.amber,label:"DOT needed"},
+  out:{bg:C.purpleBg,color:C.purple,border:"#D4B8F0",dot:C.purple,label:"Out of yard"},
+  staging:{bg:"#FFF4E0",color:"#8A5C00",border:"#F5D8A0",dot:"#D08B00",label:"Staging"},
+  arriving:{bg:C.blueBg,color:C.blue,border:C.blueMid,dot:C.blue,label:"Arriving"},
+  processing:{bg:C.amberBg,color:C.amber,border:C.amberMid,dot:C.amber,label:"Processing"},
+  inyard:{bg:C.greenBg,color:C.green,border:C.greenMid,dot:C.green,label:"In yard"},
+  readyport:{bg:C.greenBg,color:C.green,border:C.greenMid,dot:C.green,label:"Ready for port"},
+  loading:{bg:C.amberBg,color:C.amber,border:C.amberMid,dot:C.amber,label:"Loading"},
+  staged:{bg:C.blueBg,color:C.blue,border:C.blueMid,dot:C.blue,label:"Staged"},
+  scheduling:{bg:"#FFF4E0",color:"#8A5C00",border:"#F5D8A0",dot:"#D08B00",label:"Scheduling"},
+  redtag:{bg:C.redLight,color:C.redDark,border:C.redMid,dot:C.red,label:"Red tag — OOS"},
+  dotn:{bg:C.amberBg,color:C.amber,border:C.amberMid,dot:C.amber,label:"DOT needed"},
+  ready:{bg:C.greenBg,color:C.green,border:C.greenMid,dot:C.green,label:"Ready"},
+  assigned:{bg:C.amberBg,color:C.amber,border:C.amberMid,dot:C.amber,label:"Assigned"},
+  hold:{bg:C.purpleBg,color:C.purple,border:"#D4B8F0",dot:C.purple,label:"On hold"},
+  pending:{bg:C.amberBg,color:C.amber,border:C.amberMid,dot:C.amber,label:"Pending pickup"},
+};
+
+// ── ICONS (inline SVG) ──
+const Icon=({d,size=20})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={d}/></svg>;
+const Icons={
+  dashboard:"M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10",
+  trailers:"M1 3h15v13H1z M16 8h4l3 3v5h-7V8z M5.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M18.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
+  inbound:"M12 2v20M2 12l10-10 10 10",
+  outbound:"M12 22V2M2 12l10 10 10-10",
+  securement:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+  mechanic:"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z",
+  local:"M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+  sister:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75",
+};
+
+function Badge({type,label}){
+  const s=BS[type]||BS.available;
+  return <span style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:11,fontWeight:600,padding:"4px 10px",borderRadius:20,background:s.bg,color:s.color,border:`1px solid ${s.border}`,whiteSpace:"nowrap"}}>
+    <span style={{width:6,height:6,borderRadius:"50%",background:s.dot,flexShrink:0}}/>
+    {label||s.label}
+  </span>;
+}
+function Card({children,style}){
+  return <div style={{background:C.white,border:`1px solid ${C.g200}`,borderRadius:12,padding:"16px",marginBottom:16,boxShadow:"0 1px 3px rgba(27,42,74,0.07)",...style}}>{children}</div>;
+}
+function CardHeader({title,subtitle,right}){
+  return <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8}}>
+    <div style={{flex:1,minWidth:0}}>
+      <div style={{fontSize:14,fontWeight:600,color:C.g900}}>{title}</div>
+      {subtitle&&<div style={{fontSize:12,color:C.g400,marginTop:2}}>{subtitle}</div>}
+    </div>
+    {right&&<div style={{flexShrink:0}}>{right}</div>}
+  </div>;
+}
+function StatCard({label,value,color,sub}){
+  return <div style={{background:C.white,border:`1px solid ${C.g200}`,borderRadius:12,padding:"14px 16px",boxShadow:"0 1px 3px rgba(27,42,74,0.07)"}}>
+    <div style={{fontSize:10,fontWeight:700,letterSpacing:"0.07em",textTransform:"uppercase",color:C.g400,marginBottom:6}}>{label}</div>
+    <div style={{fontSize:26,fontWeight:600,color:color||C.g900,lineHeight:1,fontFamily:"'DM Mono',monospace"}}>{value}</div>
+    {sub&&<div style={{fontSize:11,color:C.g400,marginTop:4}}>{sub}</div>}
+  </div>;
+}
+function FG({label,children}){
+  return <div style={{display:"flex",flexDirection:"column",gap:5}}>
+    <label style={{fontSize:11,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:C.g500}}>{label}</label>
+    {children}
+  </div>;
+}
+const iS={fontFamily:"'DM Sans',system-ui,sans-serif",fontSize:14,color:C.g900,background:C.white,border:`1.5px solid ${C.g200}`,borderRadius:8,padding:"10px 12px",width:"100%",outline:"none"};
+const sS={...iS,appearance:"none",WebkitAppearance:"none",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239AA3B8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,backgroundRepeat:"no-repeat",backgroundPosition:"right 10px center",paddingRight:30};
+function BtnP({children,onClick,style}){
+  return <button onClick={onClick} style={{background:C.red,color:"#fff",border:"none",padding:"11px 20px",borderRadius:8,fontSize:13,fontWeight:600,fontFamily:"inherit",cursor:"pointer",whiteSpace:"nowrap",boxShadow:"0 2px 6px rgba(200,16,46,0.25)",...style}}>{children}</button>;
+}
+function BtnS({children,onClick}){
+  return <button onClick={onClick} style={{background:C.white,color:C.g700,border:`1.5px solid ${C.g200}`,padding:"10px 18px",borderRadius:8,fontSize:13,fontWeight:500,fontFamily:"inherit",cursor:"pointer",whiteSpace:"nowrap"}}>{children}</button>;
+}
+function SecTitle({children}){
+  return <div style={{display:"flex",alignItems:"center",gap:8,fontSize:13,fontWeight:600,color:C.g700,marginBottom:12}}>
+    {children}<span style={{flex:1,height:1,background:C.g200}}/>
+  </div>;
+}
+const Num=({c})=><span style={{fontFamily:"'DM Mono',monospace",fontWeight:500,fontSize:13,color:C.g900}}>{c}</span>;
+const Mut=({c})=><span style={{color:C.g500,fontSize:12}}>{c}</span>;
+const Lbl=({c})=><span style={{fontWeight:500,color:C.g700,fontSize:13}}>{c}</span>;
+const LTag=({c})=><span style={{fontFamily:"'DM Mono',monospace",fontSize:11,fontWeight:500,color:C.blue,background:C.blueBg,padding:"2px 7px",borderRadius:4}}>{c}</span>;
+const PRTag=()=><span style={{background:C.navy,color:"rgba(255,255,255,0.9)",fontSize:10,fontWeight:700,letterSpacing:"0.05em",padding:"3px 8px",borderRadius:4}}>Puerto Rico</span>;
+const CPill=({c})=><span style={{fontSize:11,fontWeight:600,color:C.g500,background:C.g100,padding:"3px 10px",borderRadius:20,border:`1px solid ${C.g200}`}}>{c}</span>;
+const Divider=()=><div style={{height:1,background:C.g200,margin:"16px 0"}}/>;
+const SIntro=({children})=><div style={{fontSize:13,color:C.g500,marginBottom:14,lineHeight:1.6,padding:"10px 14px",background:C.navyLight,borderLeft:`3px solid ${C.navy}`,borderRadius:"0 8px 8px 0"}}>{children}</div>;
+
+// Mobile card row — stacks info vertically
+function MobileRow({hl,children}){
+  const bg=hl==="red"?C.redLight:hl==="amber"?C.amberBg:C.g50;
+  const bc=hl==="red"?C.redMid:hl==="amber"?C.amberMid:C.g200;
+  const bl=hl==="red"?`3px solid ${C.red}`:hl==="amber"?`3px solid ${C.amber}`:`1px solid ${C.g200}`;
+  return <div style={{background:bg,border:`1px solid ${bc}`,borderLeft:bl,borderRadius:8,padding:"12px 14px",marginBottom:8}}>{children}</div>;
+}
+function MRow({label,children}){
+  return <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,gap:8}}>
+    <span style={{fontSize:11,fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase",color:C.g400,flexShrink:0}}>{label}</span>
+    <span style={{textAlign:"right"}}>{children}</span>
+  </div>;
+}
+
+// Detect mobile
+function useIsMobile(){
+  const [mobile,setMobile]=useState(window.innerWidth<=768);
+  useEffect(()=>{
+    const h=()=>setMobile(window.innerWidth<=768);
+    window.addEventListener("resize",h);
+    return()=>window.removeEventListener("resize",h);
+  },[]);
+  return mobile;
+}
+
+// ── TRAILER DATA ──
+const TRAILERS=[
+  {num:"24000",year:"2022",make:"EVANS",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24001",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24002",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24003",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24004",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24005",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24006",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24007",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24008",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24009",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24010",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24011",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24012",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24013",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24014",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24015",year:"2022",make:"FNTTR",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24016",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24017",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24018",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24019",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24020",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24021",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24022",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24023",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24024",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24025",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24026",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24027",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24028",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24029",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24030",year:"2022",make:"TRKNG",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24031",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24032",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24033",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24034",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:"SW"},
+  {num:"24035",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24036",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24037",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24038",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24039",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24040",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24041",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24042",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24043",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24044",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24045",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24046",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24047",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24048",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24049",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24050",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:"SW"},
+  {num:"24051",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24052",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24053",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"24054",year:"2019",make:"HYUND",   type:"53' Flatbed",status:"available",load:"",notes:"SW"},
+  {num:"26117",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26118",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26119",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26120",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26121",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"red",      load:"",notes:"OOS"},
+  {num:"26122",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26123",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"red",      load:"",notes:"OOS"},
+  {num:"26124",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26125",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26126",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26127",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26128",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26129",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"red",      load:"",notes:"OOS"},
+  {num:"26130",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26131",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"red",      load:"",notes:"OOS"},
+  {num:"26132",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26133",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26134",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"red",      load:"",notes:"OOS"},
+  {num:"26135",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26136",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26137",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"red",      load:"",notes:"OOS"},
+  {num:"26139",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"red",      load:"",notes:"OOS"},
+  {num:"26140",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"26141",year:"2008",make:"TRNSC",   type:"53' Flatbed",status:"available",load:"",notes:""},
+  {num:"49307",year:"2008",make:"TRKNG",   type:"Stepdeck",status:"red",      load:"",notes:"OOS"},
+  {num:"49308",year:"2008",make:"TRKNG",   type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49309",year:"2008",make:"TRKNG",   type:"Stepdeck",status:"red",      load:"",notes:"OOS"},
+  {num:"49310",year:"2008",make:"TRKNG",   type:"Stepdeck",status:"red",      load:"",notes:"OOS"},
+  {num:"49312",year:"2008",make:"TRKNG",   type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49313",year:"2008",make:"TRKNG",   type:"Stepdeck",status:"available",load:"",notes:"PACOPS"},
+  {num:"49315",year:"2008",make:"TRKNG",   type:"Stepdeck",status:"red",      load:"",notes:"OOS"},
+  {num:"49316",year:"2008",make:"TRKNG",   type:"Stepdeck",status:"red",      load:"",notes:"OOS"},
+  {num:"49317",year:"2008",make:"TRKNG",   type:"Stepdeck",status:"red",      load:"",notes:"OOS"},
+  {num:"49320",year:"2008",make:"TRKNG",   type:"Stepdeck",status:"red",      load:"",notes:"OOS"},
+  {num:"49642",year:"2012",make:"REITN",   type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49643",year:"2012",make:"REITN",   type:"Stepdeck",status:"available",load:"",notes:"SW"},
+  {num:"49644",year:"2012",make:"REITN",   type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49645",year:"2012",make:"REITN",   type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49646",year:"2012",make:"REITN",   type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49647",year:"2012",make:"REITN",   type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49648",year:"2012",make:"REITN",   type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49649",year:"2012",make:"REITN",   type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49650",year:"2012",make:"REITN",   type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49651",year:"2012",make:"REITN",   type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49753",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49754",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49755",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49756",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49757",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49758",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49759",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49760",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49761",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49762",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49763",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49764",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49765",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49766",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49767",year:"2024",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49768",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49769",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49770",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49771",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49772",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49773",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49774",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49775",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49776",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49777",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49778",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49779",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49780",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49781",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49782",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"49783",year:"2026",make:"BIG BUBBA",type:"Stepdeck",status:"available",load:"",notes:""},
+  {num:"25623",year:"",make:"",type:"48' Flatbed",status:"red",load:"",notes:"OOS"},
+  {num:"25619",year:"",make:"",type:"48' Flatbed",status:"red",load:"",notes:"OOS"},
+  {num:"26225",year:"2012",make:"REITN",type:"45' Flatbed",status:"available",load:"",notes:"PACOPS"},
+  {num:"26226",year:"2012",make:"REITN",type:"45' Flatbed",status:"available",load:"",notes:""},
+  {num:"26227",year:"2012",make:"REITN",type:"45' Flatbed",status:"available",load:"",notes:"SW"},
+  {num:"26228",year:"2012",make:"REITN",type:"45' Flatbed",status:"available",load:"",notes:""},
+  {num:"26229",year:"2012",make:"REITN",type:"45' Flatbed",status:"available",load:"",notes:""},
+  {num:"26230",year:"2012",make:"REITN",type:"45' Flatbed",status:"available",load:"",notes:""},
+  {num:"26231",year:"2012",make:"REITN",type:"45' Flatbed",status:"available",load:"",notes:"SW"},
+  {num:"26232",year:"2012",make:"REITN",type:"45' Flatbed",status:"available",load:"",notes:"SW"},
+  {num:"26233",year:"2012",make:"REITN",type:"45' Flatbed",status:"available",load:"",notes:""},
+  {num:"26234",year:"2012",make:"REITN",type:"45' Flatbed",status:"available",load:"",notes:""},
+  {num:"6268",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"6269",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"6270",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"6271",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"6272",year:"2012",make:"REITN",type:"30' Flatbed",status:"red",      load:"",notes:"OOS"},
+  {num:"6273",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"6274",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:"PACOPS"},
+  {num:"6275",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"6276",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"6277",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26235",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26236",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26238",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26239",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26240",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26241",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26242",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26243",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26244",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26245",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26246",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26247",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26248",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26249",year:"2012",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26480",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26481",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:"PACOPS"},
+  {num:"26482",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26483",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26484",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26485",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:"PACOPS"},
+  {num:"26486",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:"PACOPS"},
+  {num:"26487",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26488",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:"PACOPS"},
+  {num:"26489",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26490",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26491",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26492",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"26493",year:"2013",make:"REITN",type:"30' Flatbed",status:"available",load:"",notes:""},
+  {num:"4600",year:"2012",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"11' Deck Insert"},
+  {num:"4601",year:"2012",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"20' Deck Insert"},
+  {num:"4602",year:"2012",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"8' Deck Insert"},
+  {num:"4603",year:"2012",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"19' Deck Insert"},
+  {num:"4604",year:"2012",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"13' Deck Insert"},
+  {num:"12607",year:"2008",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"2-Axle 150HDG / Flip Double Axle"},
+  {num:"24814",year:"2012",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"Dolly"},
+  {num:"28921",year:"2003",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"3-Axle DD — PACOPS"},
+  {num:"28950",year:"2006",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"2-Axle DD"},
+  {num:"28951",year:"2006",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"2-Axle DD"},
+  {num:"28971",year:"2012",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"130MED DD / Flip Axle"},
+  {num:"28976",year:"2012",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"140 3-Axle / Flip Axle"},
+  {num:"28977",year:"2012",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"2-Axle TRUN"},
+  {num:"28992",year:"2004",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"2-Axle DD"},
+  {num:"32203",year:"2000",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"Exp RGN / 2-Axle Stinger"},
+  {num:"32208",year:"2012",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"150 MRGN / Flip Axle"},
+  {num:"28950A",year:"2006",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"Flip Axle"},
+  {num:"28951A",year:"2006",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"Flip Axle"},
+  {num:"28951B",year:"2006",make:"TRKNG",type:"Specialized",status:"available",load:"",notes:"Flip Axle"},
+  {num:"7300",year:"2014",make:"MANAC",type:"Exp. Flatbed",status:"available",load:"",notes:""},
+  {num:"7301",year:"2014",make:"MANAC",type:"Exp. Flatbed",status:"available",load:"",notes:""},
+  {num:"7471",year:"2004",make:"FNTTR",type:"Exp. Flatbed",status:"available",load:"",notes:""},
+  {num:"7473",year:"2004",make:"FNTTR",type:"Exp. Flatbed",status:"available",load:"",notes:""},
+  {num:"7467",year:"2002",make:"FNTTR",type:"Exp. Flatbed",status:"available",load:"",notes:""},
+  {num:"20400",year:"2005",make:"",type:"40' Chassis",status:"available",load:"",notes:""},
+  {num:"20401",year:"2005",make:"",type:"40' Chassis",status:"available",load:"",notes:"SW"},
+  {num:"20402",year:"2005",make:"",type:"40' Chassis",status:"available",load:"",notes:""},
+  {num:"20403",year:"2005",make:"",type:"40' Chassis",status:"available",load:"",notes:""},
+  {num:"20404",year:"2005",make:"",type:"40' Chassis",status:"available",load:"",notes:""},
+  {num:"20405",year:"2005",make:"",type:"40' Chassis",status:"available",load:"",notes:"SW"},
+  {num:"20250",year:"2017",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"20251",year:"2017",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"20252",year:"2018",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"20253",year:"2018",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"20254",year:"2018",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"20255",year:"2018",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"20256",year:"2018",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"20257",year:"2018",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"20258",year:"2018",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"20259",year:"2018",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"20260",year:"2018",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"20261",year:"2018",make:"",type:"53' Chassis",status:"available",load:"",notes:""},
+  {num:"535001",year:"2017",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535002",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535003",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535004",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535005",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535006",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535007",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535008",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535009",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535010",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535011",year:"2018",make:"",type:"Flatrack",status:"red",      load:"",notes:"OOS"},
+  {num:"535012",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535013",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535014",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535015",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535016",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535017",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535018",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535019",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535020",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"535021",year:"2018",make:"",type:"Flatrack",status:"available",load:"",notes:""},
+  {num:"530001",year:"2017",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530002",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530003",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530004",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530005",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530006",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530007",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530008",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530009",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530010",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530011",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530012",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530013",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530014",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530015",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530016",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530017",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530018",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530019",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530020",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"530021",year:"2018",make:"",type:"Cakeboxx",status:"available",load:"",notes:""},
+  {num:"26222",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26303",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26309",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26372",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26381",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26411",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26434",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26440",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26453",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26457",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26469",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26470",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26473",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26510",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"26533",year:"",make:"",type:"53' Flatbed",status:"out",load:"",notes:"Long-term rental"},
+  {num:"49704",year:"",make:"",type:"Stepdeck",   status:"out",load:"",notes:"Long-term rental"},
+  {num:"12133",year:"",make:"",type:"Specialized",status:"available",load:"",notes:"SGL DRP 3AX EXP"},
+  {num:"12134",year:"",make:"",type:"Specialized",status:"available",load:"",notes:"SGL DRP 3AX EXP"},
+  {num:"12135",year:"",make:"",type:"Specialized",status:"available",load:"",notes:"SGL DRP 3AX EXP"},
+  {num:"12136",year:"",make:"",type:"Specialized",status:"available",load:"",notes:"SGL DRP 3AX EXP"},
+  {num:"12137",year:"",make:"",type:"Specialized",status:"available",load:"",notes:"SGL DRP 3AX EXP"},
+  {num:"12138",year:"",make:"",type:"Specialized",status:"available",load:"",notes:"SGL DRP 3AX EXP"},
+  {num:"12293",year:"",make:"",type:"Specialized",status:"available",load:"",notes:"DBL DRP LWB GSNCK 3AX"},
+  {num:"12298",year:"",make:"",type:"Specialized",status:"available",load:"",notes:"DBL DRP LWB GSNCK 3AX"},
+];
+
+const INBOUND=[
+  {load:"#9071102",trailer:"24014",origin:"Atlanta, GA",status:"inyard",disposition:"Storage bay 3"},
+  {load:"#9071089",trailer:"26461",origin:"Miami, FL",status:"arriving",disposition:"Transfer → PR port"},
+  {load:"#9071143",trailer:"49650",origin:"Orlando, FL",status:"processing",disposition:"Hold for sales"},
+  {load:"#9071117",trailer:"49660",origin:"Tampa, FL",status:"inyard",disposition:"Transfer → outbound trailer"},
+];
+const OUTBOUND=[
+  {load:"#9071158",trailer:"24026",cargo:"Heavy machinery",status:"readyport",eta:"Apr 2"},
+  {load:"#9071201",trailer:"24033",cargo:"Construction steel",status:"loading",eta:"Apr 4"},
+  {load:"#9071177",trailer:"49640",cargo:"Industrial HVAC units",status:"staged",eta:"Apr 5"},
+  {load:"#9071224",trailer:"28992",cargo:"Generator sets",status:"scheduling",eta:"Apr 8"},
+];
+const MECHANIC=[
+  {trailer:"24008",type:"53' Flatbed",issue:"Airbags need replacement",status:"redtag",tagged:"2h ago"},
+  {trailer:"49641",type:"Stepdeck",issue:"Deck planks cracked",status:"redtag",tagged:"Yesterday"},
+  {trailer:"28992",type:"Specialized",issue:"Gooseneck hydraulics leaking",status:"redtag",tagged:"2 days ago"},
+  {trailer:"49307",type:"Stepdeck",issue:"Annual DOT inspection due",status:"dotn",tagged:"3 days ago"},
+  {trailer:"26121",type:"53' Flatbed",issue:"Inspection overdue — 2 weeks",status:"dotn",tagged:"2 weeks ago"},
+];
+const LOCAL=[
+  {trailer:"24017",dest:"Tampa — inbound pick up",sub:"Return to yard · 53' Flatbed",driver:"M. Torres",status:"ready"},
+  {trailer:"49644",dest:"Orlando — load pick up",sub:"Return to port · Stepdeck",driver:"R. James",status:"staging"},
+  {trailer:"26480",dest:"Gainesville — load pick up",sub:"Return to yard · 30' Flatbed",driver:"T. Warren",status:"assigned"},
+];
+const SISTER=[
+  {num:"TR-4812",company:"ATS Logistics",type:"Flatbed",notes:"Bay 5 — awaiting load",status:"available"},
+  {num:"TR-5501",company:"ATS International",type:"Stepdeck",notes:"Parked — front lot",status:"loaded"},
+  {num:"TR-6090",company:"ATS Logistics",type:"RGN",notes:"Needs pickup by Thursday",status:"pending"},
+  {num:"TR-7214",company:"ATS Brokerage",type:"45' Flatbed",notes:"Rear lot — long-term hold",status:"hold"},
+];
+const SECUREMENT=[
+  {trailer:"24026",load:"#9071158",type:"Chains + Straps",count:8,tarps:2,bungees:6},
+  {trailer:"26461",load:"#9071201",type:"Straps",count:6,tarps:0,bungees:4},
+  {trailer:"24014",load:"#9071102",type:"Chains",count:10,tarps:1,bungees:8},
+];
+
+// ── PAGES ──
+
+function Dashboard({trailers}){
+  const avail=trailers.filter(t=>t.status==="available").length;
+  const loaded=trailers.filter(t=>t.status==="loaded").length;
+  const red=trailers.filter(t=>t.status==="red").length;
+  const dotN=trailers.filter(t=>t.status==="dot").length;
+  const out=trailers.filter(t=>t.status==="out").length;
+  return <div className="fade">
+    <div style={{background:C.redLight,border:`1px solid ${C.redMid}`,borderLeft:`4px solid ${C.red}`,borderRadius:8,padding:"11px 14px",display:"flex",alignItems:"center",gap:10,fontSize:13,color:C.redDark,fontWeight:500,marginBottom:16}}>
+      <span style={{width:8,height:8,borderRadius:"50%",background:C.red,flexShrink:0,animation:"pulse 2s infinite"}}/>
+      <span>{red} trailers red-tagged. Sales: verify availability before booking.</span>
+    </div>
+    <div className="grid-stats">
+      <StatCard label="Total" value={trailers.length} sub="Fleet total"/>
+      <StatCard label="Available" value={avail} color={C.green} sub="Ready"/>
+      <StatCard label="Loaded" value={loaded} color={C.blue} sub="Assigned"/>
+      <StatCard label="Red Tagged" value={red} color={C.red} sub="OOS"/>
+      <StatCard label="DOT Due" value={dotN} color={C.amber} sub="Inspection"/>
+      <StatCard label="Out / Missing" value={out} color={C.amber} sub="Not in yard"/>
+      <StatCard label="Inbound" value={7} sub="Today"/>
+      <StatCard label="PR Outbound" value={4} sub="Port-bound"/>
+    </div>
+    <div className="grid-2col">
+      <Card>
+        <CardHeader title="Recent status changes" subtitle="Live trailer activity"/>
+        {[{t:"24008",b:"red",l:"Red — airbags",time:"2h ago"},{t:"24026",b:"loaded",l:"Loaded #9071158",time:"4h ago"},{t:"49641",b:"dot",l:"DOT needed",time:"Yesterday"},{t:"24019",b:"available",l:"Available",time:"Yesterday"}].map((r,i)=>
+          <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 10px",borderRadius:8}}>
+            <span style={{fontFamily:"'DM Mono',monospace",fontWeight:500,fontSize:13,minWidth:52,color:C.g900}}>{r.t}</span>
+            <Badge type={r.b} label={r.l}/>
+            <span style={{fontSize:11,color:C.g400,marginLeft:"auto",fontFamily:"monospace",flexShrink:0}}>{r.time}</span>
+          </div>
+        )}
+      </Card>
+      <Card>
+        <CardHeader title="Outbound — ready for pickup" subtitle="Staged & awaiting drivers"/>
+        {[{t:"24026",tag:<PRTag/>,label:"Load #9071158"},{t:"26461",tag:<PRTag/>,label:"Load #9071201"},{t:"24017",tag:<Mut c="Local — Tampa"/>,b:"available",bl:"Ready"},{t:"49644",tag:<Mut c="Local — Orlando"/>,b:"staging",bl:"Staging"}].map((r,i)=>
+          <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 10px",borderRadius:8,flexWrap:"wrap"}}>
+            <span style={{fontFamily:"'DM Mono',monospace",fontWeight:500,fontSize:13,minWidth:52}}>{r.t}</span>
+            {r.tag}
+            {r.label&&<span style={{fontSize:11,color:C.g500,marginLeft:"auto",fontFamily:"monospace"}}>{r.label}</span>}
+            {r.b&&<span style={{marginLeft:"auto"}}><Badge type={r.b} label={r.bl}/></span>}
+          </div>
+        )}
+      </Card>
+    </div>
+  </div>;
+}
+
+function TrailerInventory({trailers,setTrailers}){
+  const mobile=useIsMobile();
+  const [search,setSearch]=useState("");
+  const [fType,setFType]=useState("");
+  const [fStat,setFStat]=useState("");
+  const [nf,setNf]=useState({type:"53' Flatbed",status:"available",load:"",notes:""});
+  const L2K={Available:"available",Loaded:"loaded","Red Tag":"red","DOT Needed":"dot","Out of Yard":"out"};
+  const st=search.trim();
+  const has=st.length>0;
+  const filtered=trailers.filter(t=>{
+    const nOk=!has||t.num.includes(st);
+    const tOk=!fType||t.type===fType;
+    const sOk=!fStat||t.status===L2K[fStat];
+    return nOk&&tOk&&sOk;
+  });
+  const exactExists=trailers.some(t=>t.num===st);
+  const showAdd=has&&!exactExists&&filtered.length===0;
+  const upd=(num,val)=>setTrailers(prev=>prev.map(t=>t.num===num?{...t,status:val}:t));
+  const handleAdd=()=>{if(!st)return;setTrailers(prev=>[...prev,{num:st,...nf}]);setSearch("");setNf({type:"53' Flatbed",status:"available",load:"",notes:""});};
+
+  return <Card>
+    <CardHeader title="ATS trailer fleet — Jacksonville" subtitle="Search by trailer number to look up or add." right={<CPill c={`${trailers.length} trailers`}/>}/>
+    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+      <div style={{position:"relative"}}>
+        <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:16,color:C.g400,pointerEvents:"none"}}>⌕</span>
+        <input style={{...iS,paddingLeft:34}} placeholder="Search trailer # (e.g. 240)" value={search} onChange={e=>setSearch(e.target.value)}/>
+      </div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <select value={fType} onChange={e=>setFType(e.target.value)} style={{...sS,flex:1,minWidth:130,fontSize:13}}>
+          <option value="">All types</option>
+          {["53' Flatbed","48' Flatbed","45' Flatbed","30' Flatbed","Stepdeck","Specialized","Exp. Flatbed","40' Chassis","53' Chassis","Flatrack","Cakeboxx"].map(o=><option key={o}>{o}</option>)}
+        </select>
+        <select value={fStat} onChange={e=>setFStat(e.target.value)} style={{...sS,flex:1,minWidth:130,fontSize:13}}>
+          <option value="">All statuses</option>
+          {["Available","Loaded","Red Tag","DOT Needed","Out of Yard"].map(o=><option key={o}>{o}</option>)}
+        </select>
+      </div>
+    </div>
+
+    {filtered.length>0&&(mobile?(
+      filtered.map(t=><MobileRow key={t.num} hl={t.status==="red"?"red":t.status==="dot"?"amber":undefined}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <Num c={t.num}/>
+          <Badge type={t.status}/>
+        </div>
+        <MRow label="Type"><Mut c={t.type}/></MRow>
+        <MRow label="Year / Make"><Mut c={`${t.year||"—"} · ${t.make||"—"}`}/></MRow>
+        {(t.load||t.notes)&&<MRow label="Notes"><span>{t.load?<LTag c={t.load}/>:<Mut c={t.notes}/>}</span></MRow>}
+        <div style={{marginTop:8}}>
+          <select value={t.status} onChange={e=>upd(t.num,e.target.value)} style={{...sS,fontSize:13,width:"100%"}}>
+            {["available","loaded","red","dot","out"].map(v=><option key={v} value={v}>{BS[v]?.label||v}</option>)}
+          </select>
+        </div>
+      </MobileRow>)
+    ):(
+      <>
+        <div style={{display:"grid",gridTemplateColumns:"90px 80px 90px 1fr 150px 145px",gap:10,padding:"6px 14px",fontSize:10,fontWeight:700,letterSpacing:"0.07em",textTransform:"uppercase",color:C.g400,marginBottom:6}}>
+          <span>Trailer #</span><span>Year</span><span>Make</span><span>Type / Notes</span><span>Status</span><span>Update</span>
+        </div>
+        {filtered.map(t=>{
+          const hl=t.status==="red"?"red":t.status==="dot"?"amber":undefined;
+          const bg=hl==="red"?C.redLight:hl==="amber"?C.amberBg:C.g50;
+          const bc=hl==="red"?C.redMid:hl==="amber"?C.amberMid:C.g200;
+          const bl=hl==="red"?`3px solid ${C.red}`:hl==="amber"?`3px solid ${C.amber}`:`1px solid ${C.g200}`;
+          return <div key={t.num} style={{display:"grid",gridTemplateColumns:"90px 80px 90px 1fr 150px 145px",gap:10,padding:"11px 14px",background:bg,border:`1px solid ${bc}`,borderLeft:bl,borderRadius:8,alignItems:"center",fontSize:13,marginBottom:6}}>
+            <Num c={t.num}/><Mut c={t.year||"—"}/><Mut c={t.make||"—"}/>
+            <span>{t.load?<LTag c={t.load}/>:<span><Mut c={t.type}/>{t.notes?<span style={{marginLeft:6,fontSize:11,color:C.g400}}>· {t.notes}</span>:null}</span>}</span>
+            <span><Badge type={t.status}/></span>
+            <select value={t.status} onChange={e=>upd(t.num,e.target.value)} style={{...sS,fontSize:12}}>
+              {["available","loaded","red","dot","out"].map(v=><option key={v} value={v}>{BS[v]?.label||v}</option>)}
+            </select>
+          </div>;
+        })}
+      </>
+    ))}
+
+    {!has&&<div style={{textAlign:"center",padding:"36px 16px",color:C.g400,fontSize:13}}>Search a trailer number above to look it up or add it.</div>}
+    {has&&filtered.length===0&&!showAdd&&<div style={{textAlign:"center",padding:"24px 16px",color:C.g400,fontSize:13}}>No trailers match.</div>}
+    {showAdd&&<div style={{background:C.navyLight,border:`1px solid ${C.g200}`,borderLeft:`3px solid ${C.navy}`,borderRadius:8,padding:"14px",marginTop:4}}>
+      <div style={{fontSize:13,fontWeight:600,color:C.navy,marginBottom:12}}>Trailer <span style={{fontFamily:"monospace"}}>{st}</span> not found — add it now</div>
+      <div className="grid-form-4" style={{marginBottom:12}}>
+        <FG label="Type"><select style={sS} value={nf.type} onChange={e=>setNf(p=>({...p,type:e.target.value}))}>{["53' Flatbed","48' Flatbed","45' Flatbed","30' Flatbed","Stepdeck","Specialized","Exp. Flatbed","40' Chassis","53' Chassis","Flatrack","Cakeboxx"].map(o=><option key={o}>{o}</option>)}</select></FG>
+        <FG label="Status"><select style={sS} value={nf.status} onChange={e=>setNf(p=>({...p,status:e.target.value}))}>{["available","loaded","red","dot","out"].map(v=><option key={v} value={v}>{BS[v]?.label||v}</option>)}</select></FG>
+        <FG label="Load #"><input style={iS} placeholder="#9071XXX" value={nf.load} onChange={e=>setNf(p=>({...p,load:e.target.value}))}/></FG>
+        <FG label="Notes"><input style={iS} placeholder="Optional notes" value={nf.notes} onChange={e=>setNf(p=>({...p,notes:e.target.value}))}/></FG>
+      </div>
+      <BtnP onClick={handleAdd} style={{width:"100%",textAlign:"center"}}>Add trailer</BtnP>
+    </div>}
+  </Card>;
+}
+
+function InboundLoads({inbound,setInbound}){
+  const mobile=useIsMobile();
+  const [f,setF]=useState({load:"",trailer:"",origin:"",disposition:"Storage"});
+  const sb={inyard:"inyard",arriving:"arriving",processing:"processing"};
+  const add=()=>{if(!f.load)return;setInbound(p=>[...p,{...f,status:"inyard"}]);setF({load:"",trailer:"",origin:"",disposition:"Storage"});};
+  return <Card>
+    <CardHeader title="Inbound loads" subtitle="Loads arriving for storage or transfer" right={<BtnP onClick={add} style={{fontSize:12,padding:"8px 14px"}}>+ Add</BtnP>}/>
+    {mobile?(
+      inbound.map((r,i)=><MobileRow key={i}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <Num c={r.load}/><Badge type={sb[r.status]||r.status} label={r.status==="inyard"?"In yard":r.status==="arriving"?"Arriving":"Processing"}/>
+        </div>
+        <MRow label="Trailer"><Num c={r.trailer}/></MRow>
+        <MRow label="Origin"><Mut c={r.origin}/></MRow>
+        <MRow label="Disposition"><Mut c={r.disposition}/></MRow>
+      </MobileRow>)
+    ):(
+      <>
+        <div style={{display:"grid",gridTemplateColumns:"110px 90px 1fr 130px 160px",gap:10,padding:"6px 14px",fontSize:10,fontWeight:700,letterSpacing:"0.07em",textTransform:"uppercase",color:C.g400,marginBottom:6}}>
+          <span>Load #</span><span>Trailer #</span><span>Origin</span><span>Status</span><span>Disposition</span>
+        </div>
+        {inbound.map((r,i)=><div key={i} style={{display:"grid",gridTemplateColumns:"110px 90px 1fr 130px 160px",gap:10,padding:"11px 14px",background:C.g50,border:`1px solid ${C.g200}`,borderRadius:8,alignItems:"center",fontSize:13,marginBottom:6}}>
+          <Num c={r.load}/><Num c={r.trailer}/><Mut c={r.origin}/>
+          <Badge type={sb[r.status]||r.status} label={r.status==="inyard"?"In yard":r.status==="arriving"?"Arriving":"Processing"}/>
+          <Mut c={r.disposition}/>
+        </div>)}
+      </>
+    )}
+    <Divider/><SecTitle>Log new inbound load</SecTitle>
+    <div className="grid-form-2" style={{marginBottom:12}}>
+      <FG label="Load #"><input style={iS} placeholder="9071XXX" value={f.load} onChange={e=>setF(p=>({...p,load:e.target.value}))}/></FG>
+      <FG label="Trailer #"><input style={iS} placeholder="Trailer number" value={f.trailer} onChange={e=>setF(p=>({...p,trailer:e.target.value}))}/></FG>
+      <FG label="Origin city"><input style={iS} placeholder="City, State" value={f.origin} onChange={e=>setF(p=>({...p,origin:e.target.value}))}/></FG>
+      <FG label="Disposition"><select style={sS} value={f.disposition} onChange={e=>setF(p=>({...p,disposition:e.target.value}))}>{["Storage","Transfer to outbound trailer","Transfer to PR port","Hold for sales"].map(o=><option key={o}>{o}</option>)}</select></FG>
+    </div>
+    <BtnP onClick={add} style={{width:"100%",textAlign:"center"}}>Log load</BtnP>
+  </Card>;
+}
+
+function OutboundPR({outbound,setOutbound}){
+  const mobile=useIsMobile();
+  const [f,setF]=useState({load:"",trailer:"",cargo:"",eta:""});
+  const sb={readyport:"readyport",loading:"loading",staged:"staged",scheduling:"scheduling"};
+  const add=()=>{if(!f.load)return;setOutbound(p=>[...p,{...f,status:"scheduling"}]);setF({load:"",trailer:"",cargo:"",eta:""});};
+  return <Card>
+    <CardHeader title="Outbound — Puerto Rico shipping" subtitle="Trailers prepared for port departure" right={<BtnP style={{fontSize:12,padding:"8px 14px"}}>+ Add</BtnP>}/>
+    {mobile?(
+      outbound.map((r,i)=><MobileRow key={i}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <Num c={r.load}/><Badge type={sb[r.status]||r.status}/>
+        </div>
+        <MRow label="Trailer"><Num c={r.trailer}/></MRow>
+        <MRow label="Cargo"><Mut c={r.cargo}/></MRow>
+        <MRow label="Port ETA"><Mut c={r.eta}/></MRow>
+      </MobileRow>)
+    ):(
+      <>
+        <div style={{display:"grid",gridTemplateColumns:"110px 90px 1fr 150px 100px",gap:10,padding:"6px 14px",fontSize:10,fontWeight:700,letterSpacing:"0.07em",textTransform:"uppercase",color:C.g400,marginBottom:6}}>
+          <span>Load #</span><span>Trailer #</span><span>Cargo</span><span>Status</span><span>Port ETA</span>
+        </div>
+        {outbound.map((r,i)=><div key={i} style={{display:"grid",gridTemplateColumns:"110px 90px 1fr 150px 100px",gap:10,padding:"11px 14px",background:C.g50,border:`1px solid ${C.g200}`,borderRadius:8,alignItems:"center",fontSize:13,marginBottom:6}}>
+          <Num c={r.load}/><Num c={r.trailer}/><Mut c={r.cargo}/><Badge type={sb[r.status]||r.status}/><Mut c={r.eta}/>
+        </div>)}
+      </>
+    )}
+    <Divider/><SecTitle>Add outbound shipment</SecTitle>
+    <div className="grid-form-2" style={{marginBottom:12}}>
+      <FG label="Load #"><input style={iS} placeholder="9071XXX" value={f.load} onChange={e=>setF(p=>({...p,load:e.target.value}))}/></FG>
+      <FG label="Trailer #"><input style={iS} placeholder="Trailer number" value={f.trailer} onChange={e=>setF(p=>({...p,trailer:e.target.value}))}/></FG>
+      <FG label="Cargo description"><input style={iS} placeholder="Describe cargo" value={f.cargo} onChange={e=>setF(p=>({...p,cargo:e.target.value}))}/></FG>
+      <FG label="Port ETA"><input style={iS} type="date" value={f.eta} onChange={e=>setF(p=>({...p,eta:e.target.value}))}/></FG>
+    </div>
+    <BtnP onClick={add} style={{width:"100%",textAlign:"center"}}>Add shipment</BtnP>
+  </Card>;
+}
+
+function LoadSecurement({sec,setSec}){
+  const [f,setF]=useState({trailer:"",load:"",type:"Chains",count:"",tarp:"no",tarpCount:"",bungees:"",edge:"No",notes:""});
+  const submit=()=>{
+    if(!f.trailer||!f.load)return;
+    setSec(p=>[...p,{trailer:f.trailer,load:"#"+f.load.replace("#",""),type:f.type,count:f.count||0,tarps:f.tarp==="yes"?(f.tarpCount||0):0,bungees:f.bungees||0}]);
+    setF({trailer:"",load:"",type:"Chains",count:"",tarp:"no",tarpCount:"",bungees:"",edge:"No",notes:""});
+  };
+  return <div>
+    <Card>
+      <CardHeader title="Load securement form" subtitle="Replaces Monday manual entry" right={<CPill c="Log record"/>}/>
+      <div className="grid-form-2" style={{marginBottom:12}}>
+        <FG label="Trailer #"><input style={iS} placeholder="Trailer number" value={f.trailer} onChange={e=>setF(p=>({...p,trailer:e.target.value}))}/></FG>
+        <FG label="Load #"><input style={iS} placeholder="9071XXX" value={f.load} onChange={e=>setF(p=>({...p,load:e.target.value}))}/></FG>
+        <FG label="Securement type"><select style={sS} value={f.type} onChange={e=>setF(p=>({...p,type:e.target.value}))}>{["Chains","Straps","Chains + Straps","Wire rope","Blocked & braced","Chains + Blocked"].map(o=><option key={o}>{o}</option>)}</select></FG>
+        <FG label="# of securements"><input style={iS} type="number" placeholder="0" min="0" value={f.count} onChange={e=>setF(p=>({...p,count:e.target.value}))}/></FG>
+        <FG label="Tarp required?"><select style={sS} value={f.tarp} onChange={e=>setF(p=>({...p,tarp:e.target.value}))}><option value="no">No</option><option value="yes">Yes</option></select></FG>
+        {f.tarp==="yes"&&<FG label="# of tarps"><input style={iS} type="number" placeholder="0" min="0" value={f.tarpCount} onChange={e=>setF(p=>({...p,tarpCount:e.target.value}))}/></FG>}
+        <FG label="Bungees used"><input style={iS} type="number" placeholder="0" min="0" value={f.bungees} onChange={e=>setF(p=>({...p,bungees:e.target.value}))}/></FG>
+        <FG label="Edge protectors?"><select style={sS} value={f.edge} onChange={e=>setF(p=>({...p,edge:e.target.value}))}><option>No</option><option>Yes</option></select></FG>
+        <div style={{gridColumn:"1 / -1"}}><FG label="Notes / special instructions"><textarea style={{...iS,resize:"vertical",lineHeight:1.5}} rows={2} placeholder="e.g. oversized, requires escort..." value={f.notes} onChange={e=>setF(p=>({...p,notes:e.target.value}))}/></FG></div>
+      </div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <BtnP onClick={submit} style={{flex:1,textAlign:"center"}}>Submit record</BtnP>
+        <BtnS onClick={()=>setF({trailer:"",load:"",type:"Chains",count:"",tarp:"no",tarpCount:"",bungees:"",edge:"No",notes:""})}>Clear</BtnS>
+      </div>
+    </Card>
+    <Card>
+      <CardHeader title="Recent securement records" right={<CPill c="Today"/>}/>
+      {sec.map((r,i)=><MobileRow key={i}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <Num c={r.trailer}/><LTag c={r.load}/>
+        </div>
+        <MRow label="Type"><Mut c={r.type}/></MRow>
+        <MRow label="Count"><span style={{fontFamily:"monospace",fontWeight:500}}>{r.count}</span></MRow>
+        <MRow label="Tarps"><span style={{fontFamily:"monospace",fontWeight:500}}>{r.tarps}</span></MRow>
+        <MRow label="Bungees"><span style={{fontFamily:"monospace",fontWeight:500}}>{r.bungees}</span></MRow>
+      </MobileRow>)}
+    </Card>
+  </div>;
+}
+
+function MechanicBoard({mech,setMech}){
+  const [f,setF]=useState({trailer:"",issue:"",status:"Red tag — out of service",initials:""});
+  const sm={"Red tag — out of service":"redtag","DOT inspection needed":"dotn","In for repairs":"dot","Cleared — back in service":"available"};
+  const submit=()=>{
+    if(!f.trailer)return;
+    setMech(p=>[...p,{trailer:f.trailer,type:"",issue:f.issue,status:sm[f.status]||"redtag",tagged:"Just now"}]);
+    setF({trailer:"",issue:"",status:"Red tag — out of service",initials:""});
+  };
+  return <Card>
+    <CardHeader title="Mechanic board — red tags & repairs" subtitle="Digital equivalent of the physical red tag system"/>
+    {mech.map((r,i)=><MobileRow key={i} hl={r.status==="redtag"?"red":r.status==="dotn"?"amber":undefined}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <Num c={r.trailer}/><Badge type={r.status}/>
+      </div>
+      {r.type&&<MRow label="Type"><Mut c={r.type}/></MRow>}
+      <MRow label="Issue"><Lbl c={r.issue}/></MRow>
+      <MRow label="Tagged"><Mut c={r.tagged}/></MRow>
+    </MobileRow>)}
+    <Divider/><SecTitle>Tag a trailer</SecTitle>
+    <div className="grid-form-2" style={{marginBottom:12}}>
+      <FG label="Trailer #"><input style={iS} placeholder="Trailer number" value={f.trailer} onChange={e=>setF(p=>({...p,trailer:e.target.value}))}/></FG>
+      <FG label="Issue / reason"><input style={iS} placeholder="Describe the issue" value={f.issue} onChange={e=>setF(p=>({...p,issue:e.target.value}))}/></FG>
+      <FG label="Status"><select style={sS} value={f.status} onChange={e=>setF(p=>({...p,status:e.target.value}))}>{["Red tag — out of service","DOT inspection needed","In for repairs","Cleared — back in service"].map(o=><option key={o}>{o}</option>)}</select></FG>
+      <FG label="Mechanic initials"><input style={iS} placeholder="e.g. J.D." maxLength={6} value={f.initials} onChange={e=>setF(p=>({...p,initials:e.target.value}))}/></FG>
+    </div>
+    <BtnP onClick={submit} style={{width:"100%",textAlign:"center"}}>Submit tag</BtnP>
+  </Card>;
+}
+
+function LocalDrivers({local,setLocal}){
+  const [f,setF]=useState({trailer:"",dest:"",ret:"Return to yard",driver:""});
+  const sb={ready:"ready",staging:"staging",assigned:"assigned"};
+  const assign=()=>{if(!f.trailer)return;setLocal(p=>[...p,{trailer:f.trailer,dest:f.dest,sub:f.ret,driver:f.driver,status:"assigned"}]);setF({trailer:"",dest:"",ret:"Return to yard",driver:""});};
+  return <Card>
+    <CardHeader title="Local driver pickup" subtitle="Empty trailers staged for outbound runs"/>
+    <SIntro>Local drivers use empty outbound trailers to pick up loads from other cities, then return to the yard or port.</SIntro>
+    {local.map((r,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:C.g50,border:`1px solid ${C.g200}`,borderRadius:8,marginBottom:8}}>
+      <div style={{width:44,height:44,borderRadius:"50%",background:C.navyLight,border:`2px solid ${C.navy}`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"monospace",fontSize:11,fontWeight:600,color:C.navy,flexShrink:0}}>{r.trailer}</div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.dest}</div>
+        <div style={{fontSize:12,color:C.g500,marginTop:2}}>{r.driver} · {r.sub}</div>
+      </div>
+      <Badge type={sb[r.status]||r.status}/>
+    </div>)}
+    <Divider/><SecTitle>Stage trailer for local run</SecTitle>
+    <div className="grid-form-2" style={{marginBottom:12}}>
+      <FG label="Trailer #"><input style={iS} placeholder="Trailer number" value={f.trailer} onChange={e=>setF(p=>({...p,trailer:e.target.value}))}/></FG>
+      <FG label="Destination city"><input style={iS} placeholder="City, State" value={f.dest} onChange={e=>setF(p=>({...p,dest:e.target.value}))}/></FG>
+      <FG label="Return destination"><select style={sS} value={f.ret} onChange={e=>setF(p=>({...p,ret:e.target.value}))}>{["Return to yard","Return to port","Transfer load — hold for dispatch"].map(o=><option key={o}>{o}</option>)}</select></FG>
+      <FG label="Driver name"><input style={iS} placeholder="Full name" value={f.driver} onChange={e=>setF(p=>({...p,driver:e.target.value}))}/></FG>
+    </div>
+    <BtnP onClick={assign} style={{width:"100%",textAlign:"center"}}>Assign trailer</BtnP>
+  </Card>;
+}
+
+function SisterTrailers({sister,setSister}){
+  const [f,setF]=useState({num:"",company:"ATS Logistics",type:"Flatbed",notes:""});
+  const sb={available:"available",loaded:"loaded",pending:"pending",hold:"hold"};
+  const log=()=>{if(!f.num)return;setSister(p=>[...p,{...f,status:"available"}]);setF({num:"",company:"ATS Logistics",type:"Flatbed",notes:""});};
+  return <Card>
+    <CardHeader title="Sister company trailers" subtitle="Partner company trailers currently on-site"/>
+    {sister.map((r,i)=><MobileRow key={i}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <Num c={r.num}/><Badge type={sb[r.status]||r.status}/>
+      </div>
+      <MRow label="Company"><Mut c={r.company}/></MRow>
+      <MRow label="Type"><Mut c={r.type}/></MRow>
+      <MRow label="Location"><Mut c={r.notes}/></MRow>
+    </MobileRow>)}
+    <Divider/><SecTitle>Log incoming trailer</SecTitle>
+    <div className="grid-form-2" style={{marginBottom:12}}>
+      <FG label="Trailer #"><input style={iS} placeholder="TR-XXXX" value={f.num} onChange={e=>setF(p=>({...p,num:e.target.value}))}/></FG>
+      <FG label="Company"><select style={sS} value={f.company} onChange={e=>setF(p=>({...p,company:e.target.value}))}>{["ATS Logistics","ATS International","ATS Brokerage","Other"].map(o=><option key={o}>{o}</option>)}</select></FG>
+      <FG label="Trailer type"><select style={sS} value={f.type} onChange={e=>setF(p=>({...p,type:e.target.value}))}>{["Flatbed","Stepdeck","RGN","Stretch Flatbed","30' Flatbed","45' Flatbed"].map(o=><option key={o}>{o}</option>)}</select></FG>
+      <FG label="Location / notes"><input style={iS} placeholder="Where parked, any notes" value={f.notes} onChange={e=>setF(p=>({...p,notes:e.target.value}))}/></FG>
+    </div>
+    <BtnP onClick={log} style={{width:"100%",textAlign:"center"}}>Log trailer</BtnP>
+  </Card>;
+}
+
+// ── NAV CONFIG ──
+const TABS=[
+  {id:"dashboard", label:"Dashboard",  icon:Icons.dashboard},
+  {id:"trailers",  label:"Trailers",   icon:Icons.trailers},
+  {id:"inbound",   label:"Inbound",    icon:Icons.inbound},
+  {id:"outbound",  label:"Outbound",   icon:Icons.outbound},
+  {id:"securement",label:"Securement", icon:Icons.securement},
+  {id:"mechanic",  label:"Mechanic",   icon:Icons.mechanic},
+  {id:"local",     label:"Local",      icon:Icons.local},
+  {id:"sister",    label:"Sister Co.", icon:Icons.sister},
+];
+
+// ── APP ──
+function App(){
+  const [tab,setTab]=useState("dashboard");
+  const [trailers,setTrailers]=useState(TRAILERS);
+  const [inbound,setInbound]=useState(INBOUND);
+  const [outbound,setOutbound]=useState(OUTBOUND);
+  const [mech,setMech]=useState(MECHANIC);
+  const [local,setLocal]=useState(LOCAL);
+  const [sister,setSister]=useState(SISTER);
+  const [sec,setSec]=useState(SECUREMENT);
+  const [date,setDate]=useState("");
+  const mobile=useIsMobile();
+
+  useEffect(()=>{
+    const d=new Date();
+    setDate(d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"}));
+  },[]);
+
+  const pageMap={
+    dashboard:<Dashboard trailers={trailers}/>,
+    trailers:<TrailerInventory trailers={trailers} setTrailers={setTrailers}/>,
+    inbound:<InboundLoads inbound={inbound} setInbound={setInbound}/>,
+    outbound:<OutboundPR outbound={outbound} setOutbound={setOutbound}/>,
+    securement:<LoadSecurement sec={sec} setSec={setSec}/>,
+    mechanic:<MechanicBoard mech={mech} setMech={setMech}/>,
+    local:<LocalDrivers local={local} setLocal={setLocal}/>,
+    sister:<SisterTrailers sister={sister} setSister={setSister}/>,
+  };
+
+  return <div style={{fontFamily:"'DM Sans',system-ui,sans-serif",background:C.g50,minHeight:"100vh",color:C.g900}}>
+
+    {/* TOPBAR */}
+    <div style={{background:C.navy,height:56,display:"flex",alignItems:"center",padding:"0 16px",gap:12,position:"sticky",top:0,zIndex:100,boxShadow:"0 2px 8px rgba(0,0,0,0.2)"}}>
+      <span style={{background:C.red,color:"#fff",fontWeight:600,fontSize:13,letterSpacing:"0.08em",padding:"5px 10px",borderRadius:6,flexShrink:0}}>ATS</span>
+      <div style={{width:1,height:20,background:"rgba(255,255,255,0.15)",flexShrink:0}}/>
+      <span className="topbar-title" style={{color:"rgba(255,255,255,0.9)",fontSize:15,fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Yard Operations Center</span>
+      <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+        {!mobile&&<span style={{color:"rgba(255,255,255,0.45)",fontSize:12,fontFamily:"monospace"}}>{date}</span>}
+        <span style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",color:"rgba(255,255,255,0.8)",fontSize:11,fontWeight:500,padding:"4px 10px",borderRadius:6,whiteSpace:"nowrap"}}>JAX Yard</span>
+      </div>
+    </div>
+
+    {/* DESKTOP TOP NAV */}
+    <div className="top-nav" style={{display:"none",background:C.white,borderBottom:`1.5px solid ${C.g200}`,padding:"0 16px",overflowX:"auto",position:"sticky",top:56,zIndex:99,boxShadow:"0 1px 3px rgba(27,42,74,0.07)"}}>
+      {TABS.map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{background:"none",border:"none",cursor:"pointer",padding:"13px 16px",fontSize:13,fontWeight:500,fontFamily:"inherit",whiteSpace:"nowrap",color:tab===t.id?C.red:C.g500,borderBottom:tab===t.id?`2px solid ${C.red}`:"2px solid transparent",transition:"color 0.15s",letterSpacing:"0.01em"}}>{t.label}</button>)}
+    </div>
+
+    {/* MAIN CONTENT */}
+    <div className="main-content" style={{padding:16,maxWidth:1400,margin:"0 auto"}}>
+      <div className="fade" key={tab}>{pageMap[tab]}</div>
+    </div>
+
+    {/* MOBILE BOTTOM NAV */}
+    <div className="bottom-nav" style={{position:"fixed",bottom:0,left:0,right:0,background:C.white,borderTop:`1px solid ${C.g200}`,display:"flex",zIndex:100,boxShadow:"0 -2px 8px rgba(27,42,74,0.08)"}}>
+      {TABS.map(t=>{
+        const active=tab===t.id;
+        return <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",padding:"8px 2px 10px",display:"flex",flexDirection:"column",alignItems:"center",gap:3,color:active?C.red:C.g400,fontFamily:"inherit",transition:"color 0.15s",minWidth:0}}>
+          <Icon d={t.icon} size={20}/>
+          <span style={{fontSize:9,fontWeight:active?600:400,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%",letterSpacing:"0.01em"}}>{t.label}</span>
+        </button>;
+      })}
+    </div>
+  </div>;
+}
+
+ReactDOM.render(<App/>,document.getElementById("root"));
+</script>
+</body>
+</html>
